@@ -1231,30 +1231,52 @@ function setupProfileMenu() {
 }
 
 if (profileMenuBtn && profileSidebarOverlay && profileSidebar) {
-    profileMenuBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (profileSidebarOverlay.classList.contains('hidden')) {
-            profileSidebarOverlay.classList.remove('hidden');
-            setTimeout(() => {
-                profileSidebar.classList.remove('translate-x-full');
-                profileSidebar.classList.add('translate-x-0');
-            }, 10);
-        } else {
-            profileSidebar.classList.remove('translate-x-0');
-            profileSidebar.classList.add('translate-x-full');
-            setTimeout(() => {
-                profileSidebarOverlay.classList.add('hidden');
-            }, 300);
-        }
-    });
-}
-if (closeSidebarBtn && profileSidebarOverlay && profileSidebar) {
-    closeSidebarBtn.addEventListener('click', function() {
+    // Función para abrir el sidebar
+    function openSidebar() {
+        profileSidebarOverlay.classList.remove('hidden');
+        document.body.classList.add('sidebar-open');
+        setTimeout(() => {
+            profileSidebar.classList.remove('translate-x-full');
+            profileSidebar.classList.add('translate-x-0');
+        }, 10);
+    }
+    
+    // Función para cerrar el sidebar
+    function closeSidebar() {
         profileSidebar.classList.remove('translate-x-0');
         profileSidebar.classList.add('translate-x-full');
+        document.body.classList.remove('sidebar-open');
         setTimeout(() => {
             profileSidebarOverlay.classList.add('hidden');
         }, 300);
+    }
+    
+    // Evento del botón de perfil
+    profileMenuBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (profileSidebarOverlay.classList.contains('hidden')) {
+            openSidebar();
+        } else {
+            closeSidebar();
+        }
+    });
+    
+    // Evento del botón de cerrar
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+    }
+    
+    // Cerrar al hacer clic en el backdrop
+    const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+    if (sidebarBackdrop) {
+        sidebarBackdrop.addEventListener('click', closeSidebar);
+    }
+    
+    // Cerrar con la tecla Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !profileSidebarOverlay.classList.contains('hidden')) {
+            closeSidebar();
+        }
     });
 }
 // Poblar datos del usuario en el sidebar

@@ -32,6 +32,8 @@
 
     <div id="cursor-spotlight" class="fixed top-0 left-0 w-full h-full pointer-events-none z-30"></div>
 
+    <!-- Contenedor principal que se desplaza -->
+    <div id="main-container" class="transition-transform duration-300 ease-in-out">
     <!-- Top Navigation Bar -->
     <header class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md sticky top-0 z-50">
         <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -79,33 +81,7 @@
                             <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                             <span id="profile-user-name">Perfil</span>
                         </button>
-                        <!-- Overlay y Sidebar de perfil -->
-                        <div id="profile-sidebar-overlay" class="hidden fixed inset-0 z-50">
-                          <div class="absolute inset-0 bg-gray-900 bg-opacity-90"></div>
-                          <div id="profile-sidebar" class="absolute top-0 right-0 w-80 max-w-full h-full bg-gray-900 text-white shadow-2xl transition-transform duration-300 ease-in-out transform translate-x-full">
-                              <div class="flex flex-col h-full">
-                                  <div class="flex items-center justify-between p-4 border-b border-gray-700">
-                                      <div>
-                                          <div class="font-bold text-lg" id="sidebar-username">Usuario</div>
-                                          <div class="text-sm text-gray-400" id="sidebar-useremail">correo@ejemplo.com</div>
-                                      </div>
-                                      <button id="close-sidebar" class="text-gray-400 hover:text-white">
-                                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                          </svg>
-                                      </button>
-                                  </div>
-                                  <nav class="flex-1 p-4 space-y-2">
-                                      <a href="#" class="flex items-center gap-2 p-2 rounded hover:bg-gray-800"><span>👤</span> Mi perfil</a>
-                                      <a href="#" class="flex items-center gap-2 p-2 rounded hover:bg-gray-800"><span>⚙️</span> Configuración</a>
-                                      <a href="#" class="flex items-center gap-2 p-2 rounded hover:bg-gray-800"><span>⭐</span> Favoritos</a>
-                                  </nav>
-                                  <div class="p-4 border-t border-gray-700">
-                                      <button id="logout-btn-sidebar" class="w-full text-left text-red-400 hover:text-red-600">Cerrar sesión</button>
-                                  </div>
-                              </div>
-                          </div>
-                        </div>
+                        <!-- El sidebar ahora se mueve fuera del contenedor principal -->
                     </div>
                     <div class="md:hidden ml-4">
                         <button id="menu-toggle" class="p-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white">
@@ -464,6 +440,54 @@
     <footer class="text-center py-8 mt-8">
         <p class="text-gray-500 dark:text-gray-400">Impulso IA - Potenciando a los emprendedores de Colombia.</p>
     </footer>
+    </div>
+    <!-- Fin del contenedor principal -->
+
+    <!-- Sidebar de perfil (fuera del contenedor principal) -->
+    <div id="profile-sidebar-overlay" class="hidden fixed inset-0 z-50">
+        <div class="absolute inset-0 bg-black bg-opacity-60" id="sidebar-backdrop"></div>
+        <div id="profile-sidebar" class="fixed top-0 right-0 w-80 max-w-full h-full bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out border-l border-gray-700">
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-between p-6 border-b border-gray-700 bg-gray-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="font-bold text-lg" id="sidebar-username">Usuario</div>
+                            <div class="text-sm text-gray-300" id="sidebar-useremail">correo@ejemplo.com</div>
+                        </div>
+                    </div>
+                    <button id="close-sidebar" class="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex-1 flex items-center justify-center p-8">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-white mb-2">Perfil de Usuario</h3>
+                        <p class="text-gray-300 text-sm">Gestiona tu cuenta y preferencias</p>
+                    </div>
+                </div>
+                <div class="p-6 border-t border-gray-700 bg-gray-800">
+                    <button id="logout-btn-sidebar" class="w-full flex items-center justify-center gap-3 py-3 px-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Cerrar sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- JavaScript Files -->
     <script src="js/config.js"></script>
@@ -480,6 +504,22 @@
         width: 4rem;
         height: 4rem;
         animation: spin 1s linear infinite;
+    }
+    
+    /* Estilos para el sidebar */
+    .sidebar-open #main-container {
+        transform: translateX(-320px);
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar-open #main-container {
+            transform: translateX(-100%);
+        }
+        
+        #profile-sidebar {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
     }
     @keyframes spin {
         0% { transform: rotate(0deg); }

@@ -16,14 +16,14 @@
             color: #fff;
         }
         .login-gradient-btn {
-            background: linear-gradient(90deg, #FF8A00 0%, #E52E71 100%);
+            background: linear-gradient(90deg, #3B82F6 0%, #14B8A6 100%);
             color: #fff;
             font-weight: 700;
             transition: all 0.3s;
         }
         .login-gradient-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(229, 46, 113, 0.2);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
         }
         .login-gradient-btn:disabled {
             background: #555;
@@ -38,9 +38,9 @@
             color: #fff;
         }
         .login-input:focus {
-            border-color: #FF8A00;
+            border-color: #3B82F6;
             outline: none;
-            box-shadow: 0 0 0 2px rgba(255, 138, 0, 0.3);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
         }
         
         /* Estilos para una animación fluida */
@@ -113,10 +113,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
         a.volver-btn:hover, a.volver-btn:hover span {
-            color: #FF8A00 !important;
+            color: #3B82F6 !important;
         }
         a.volver-btn:hover svg {
-            stroke: #FF8A00 !important;
+            stroke: #3B82F6 !important;
         }
     </style>
 </head>
@@ -134,7 +134,23 @@
                 <!-- Sección de Login -->
                 <div id="login-section" class="form-section">
                     <div class="flex items-center gap-3 mb-8">
-                        <div class="bg-black rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold text-white">A</div>
+                        <svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="logo-gradient-login1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color: #3B82F6;" />
+                                    <stop offset="100%" style="stop-color: #14B8A6;" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M14 20.5V16.5C14 15.3954 13.1046 14.5 12 14.5H10.5M3.5 10H7.5C8.60457 10 9.5 9.10457 9.5 8V3.5" stroke="url(#logo-gradient-login1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3.5 14H7.5C8.60457 14 9.5 14.8954 9.5 16V20.5" stroke="url(#logo-gradient-login1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14 3.5V7.5C14 8.60457 14.8954 9.5 16 9.5H20.5" stroke="url(#logo-gradient-login1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M20.5 14H16.5C15.3954 14 14.5 14.8954 14.5 16V20.5" stroke="url(#logo-gradient-login1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <rect x="10" y="10" width="4" height="4" rx="0.5" stroke="url(#logo-gradient-login1)" stroke-width="1.5"/>
+                            <path d="M12 10V8" stroke="url(#logo-gradient-login1)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M12 14V16" stroke="url(#logo-gradient-login1)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M10 12H8" stroke="url(#logo-gradient-login1)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M14 12H16" stroke="url(#logo-gradient-login1)" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
                         <span class="text-xl font-semibold text-white">Impulso IA</span>
                     </div>
                     <h2 class="text-3xl font-bold text-white mb-2">Bienvenido de nuevo</h2>
@@ -167,14 +183,30 @@
                         <div id="login-error" class="text-red-500 text-center font-semibold h-5"></div>
                     </form>
                     <div class="mt-6 text-center text-gray-400">
-                        ¿No tienes cuenta? <a href="#" id="show-register" class="text-orange-400 hover:underline">Regístrate gratis</a>
+                        ¿No tienes cuenta? <a href="#" id="show-register" class="text-blue-400 hover:underline">Regístrate gratis</a>
                     </div>
                 </div>
 
                 <!-- Sección de Registro -->
                 <div id="register-section" class="form-section">
                     <div class="flex items-center gap-3 mb-6">
-                        <div class="bg-black rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold text-white">A</div>
+                        <svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="logo-gradient-login2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color: #3B82F6;" />
+                                    <stop offset="100%" style="stop-color: #14B8A6;" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M14 20.5V16.5C14 15.3954 13.1046 14.5 12 14.5H10.5M3.5 10H7.5C8.60457 10 9.5 9.10457 9.5 8V3.5" stroke="url(#logo-gradient-login2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3.5 14H7.5C8.60457 14 9.5 14.8954 9.5 16V20.5" stroke="url(#logo-gradient-login2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14 3.5V7.5C14 8.60457 14.8954 9.5 16 9.5H20.5" stroke="url(#logo-gradient-login2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M20.5 14H16.5C15.3954 14 14.5 14.8954 14.5 16V20.5" stroke="url(#logo-gradient-login2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <rect x="10" y="10" width="4" height="4" rx="0.5" stroke="url(#logo-gradient-login2)" stroke-width="1.5"/>
+                            <path d="M12 10V8" stroke="url(#logo-gradient-login2)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M12 14V16" stroke="url(#logo-gradient-login2)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M10 12H8" stroke="url(#logo-gradient-login2)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M14 12H16" stroke="url(#logo-gradient-login2)" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
                         <span class="text-xl font-semibold text-white">Impulso IA</span>
                     </div>
                     <h2 class="text-3xl font-bold text-white mb-2">Crear cuenta</h2>
@@ -228,14 +260,30 @@
                         <div id="register-error" class="text-red-500 text-center font-semibold h-5"></div>
                     </form>
                     <div class="mt-4 text-center text-gray-400">
-                        ¿Ya tienes cuenta? <a href="#" id="show-login" class="text-orange-400 hover:underline">Iniciar sesión</a>
+                        ¿Ya tienes cuenta? <a href="#" id="show-login" class="text-blue-400 hover:underline">Iniciar sesión</a>
                     </div>
                 </div>
 
                 <!-- Sección para Completar Perfil (tras registro con Google) -->
                 <div id="complete-profile-section" class="form-section">
                     <div class="flex items-center gap-3 mb-6">
-                        <div class="bg-black rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold text-white">A</div>
+                        <svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="logo-gradient-login3" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color: #3B82F6;" />
+                                    <stop offset="100%" style="stop-color: #14B8A6;" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M14 20.5V16.5C14 15.3954 13.1046 14.5 12 14.5H10.5M3.5 10H7.5C8.60457 10 9.5 9.10457 9.5 8V3.5" stroke="url(#logo-gradient-login3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3.5 14H7.5C8.60457 14 9.5 14.8954 9.5 16V20.5" stroke="url(#logo-gradient-login3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14 3.5V7.5C14 8.60457 14.8954 9.5 16 9.5H20.5" stroke="url(#logo-gradient-login3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M20.5 14H16.5C15.3954 14 14.5 14.8954 14.5 16V20.5" stroke="url(#logo-gradient-login3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <rect x="10" y="10" width="4" height="4" rx="0.5" stroke="url(#logo-gradient-login3)" stroke-width="1.5"/>
+                            <path d="M12 10V8" stroke="url(#logo-gradient-login3)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M12 14V16" stroke="url(#logo-gradient-login3)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M10 12H8" stroke="url(#logo-gradient-login3)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M14 12H16" stroke="url(#logo-gradient-login3)" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
                         <span class="text-xl font-semibold text-white">Impulso IA</span>
                     </div>
                     <h2 class="text-3xl font-bold text-white mb-2">Un último paso...</h2>
@@ -258,7 +306,23 @@
 
         <!-- Panel Derecho: Branding -->
         <div id="branding-panel" class="w-1/2 p-10 md:flex flex-col items-center justify-center bg-black bg-opacity-90">
-            <div class="bg-[#18181b] rounded-full w-16 h-16 flex items-center justify-center text-2xl font-bold text-white mb-6">A</div>
+            <svg class="h-16 w-16 mb-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logo-gradient-branding" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color: #3B82F6;" />
+                        <stop offset="100%" style="stop-color: #14B8A6;" />
+                    </linearGradient>
+                </defs>
+                <path d="M14 20.5V16.5C14 15.3954 13.1046 14.5 12 14.5H10.5M3.5 10H7.5C8.60457 10 9.5 9.10457 9.5 8V3.5" stroke="url(#logo-gradient-branding)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3.5 14H7.5C8.60457 14 9.5 14.8954 9.5 16V20.5" stroke="url(#logo-gradient-branding)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M14 3.5V7.5C14 8.60457 14.8954 9.5 16 9.5H20.5" stroke="url(#logo-gradient-branding)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M20.5 14H16.5C15.3954 14 14.5 14.8954 14.5 16V20.5" stroke="url(#logo-gradient-branding)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="10" y="10" width="4" height="4" rx="0.5" stroke="url(#logo-gradient-branding)" stroke-width="1.5"/>
+                <path d="M12 10V8" stroke="url(#logo-gradient-branding)" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M12 14V16" stroke="url(#logo-gradient-branding)" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M10 12H8" stroke="url(#logo-gradient-branding)" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M14 12H16" stroke="url(#logo-gradient-branding)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
             <h2 class="text-3xl font-extrabold text-white mb-2">Impulso IA</h2>
             <div class="text-gray-400 mb-4">Soluciones empresariales</div>
             <p class="text-gray-400 text-center">Diagnóstico y asesoría en inteligencia artificial para empresas colombianas.</p>
@@ -367,7 +431,7 @@
                         email: user.email,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    window.location.href = 'perfil.html'; // Redirigir al chat
+                    window.location.href = 'index.html'; // Redirigir al índice
                 } catch (err) {
                     if (err.code === 'auth/email-already-in-use') {
                         registerErrorDiv.textContent = 'Este correo ya está registrado.';
@@ -416,7 +480,7 @@
                         email: user.email,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     }, { merge: true });
-                    window.location.href = 'perfil.html'; // Redirigir al chat
+                    window.location.href = 'index.html'; // Redirigir al índice
                 } catch (err) {
                     completeProfileErrorDiv.textContent = 'Error al guardar tu información.';
                 }
@@ -430,7 +494,7 @@
                     showCompleteProfileForm(user);
                 } else {
                     // Si todo está completo, redirigir
-                    window.location.href = 'perfil.html'; // Redirigir al chat
+                    window.location.href = 'index.html'; // Redirigir al índice
                 }
             }
 
