@@ -6,6 +6,7 @@ let autoRotateTimeout = null;
 let selectedAdvisor = 'chatgpt'; // Valor por defecto
 let advisorAffinity = null;
 let affinitySelection = null;
+let savedStrategy = null; // Para mantener la estrategia guardada
 
 // Elementos del DOM
 const dynamicContentArea = document.getElementById('dynamic-content-area');
@@ -74,6 +75,179 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// === FUNCIONES DE PERSISTENCIA DE ESTRATEGIA ===
+function saveStrategyToStorage(strategyData) {
+    try {
+        const dataToSave = {
+            content: strategyData.content,
+            timestamp: Date.now(),
+            businessData: strategyData.businessData
+        };
+        localStorage.setItem('saved_strategy', JSON.stringify(dataToSave));
+        savedStrategy = dataToSave;
+        console.log('Estrategia guardada en localStorage');
+    } catch (error) {
+        console.error('Error guardando estrategia:', error);
+    }
+}
+
+function loadStrategyFromStorage() {
+    try {
+        const saved = localStorage.getItem('saved_strategy');
+        if (saved) {
+            savedStrategy = JSON.parse(saved);
+            return savedStrategy;
+        }
+    } catch (error) {
+        console.error('Error cargando estrategia:', error);
+    }
+    return null;
+}
+
+function clearSavedStrategy() {
+    try {
+        localStorage.removeItem('saved_strategy');
+        savedStrategy = null;
+        console.log('Estrategia eliminada del localStorage');
+    } catch (error) {
+        console.error('Error eliminando estrategia:', error);
+    }
+}
+
+function displaySavedStrategy() {
+    const saved = loadStrategyFromStorage();
+    if (saved && strategyModalContent) {
+        strategyModalContent.innerHTML = saved.content;
+        
+        // Recrear los botones y eventos
+        setupStrategyModalButtons();
+        
+        // Mostrar botón "Generar nuevo plan"
+        showNewPlanButton();
+        
+        return true;
+    }
+    return false;
+}
+
+function setupStrategyModalButtons() {
+    // Evento botón PDF
+    const downloadPdfBtn = document.getElementById('download-pdf-btn');
+    if (downloadPdfBtn) {
+        downloadPdfBtn.removeEventListener('click', downloadPDF);
+        downloadPdfBtn.addEventListener('click', downloadPDF);
+    }
+    
+    // Evento botón primeros pasos
+    const firstStepsBtn = document.getElementById('first-steps-btn');
+    if (firstStepsBtn) {
+        firstStepsBtn.removeEventListener('click', handleFirstSteps);
+        firstStepsBtn.addEventListener('click', handleFirstSteps);
+    }
+}
+
+function showNewPlanButton() {
+    const strategyModalActions = document.getElementById('strategy-modal-actions');
+    if (strategyModalActions) {
+        // Eliminar botón existente si ya existe
+        const existingBtn = document.getElementById('new-plan-btn');
+        if (existingBtn) {
+            existingBtn.remove();
+        }
+        
+        const newPlanBtn = document.createElement('button');
+        newPlanBtn.id = 'new-plan-btn';
+        newPlanBtn.className = 'bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 w-48 rounded-full shadow-2xl transition-colors text-base flex items-center justify-center gap-2';
+        newPlanBtn.style.boxShadow = '0 8px 32px rgba(249,115,22,0.25)';
+        newPlanBtn.innerHTML = '<span>Generar nuevo plan</span>';
+        
+        newPlanBtn.addEventListener('click', () => {
+            if (confirm('¿Estás seguro de que quieres generar un nuevo plan? Se perderá el plan actual.')) {
+                clearSavedStrategy();
+                hideNewPlanButton();
+                updateGenerateStrategyButton();
+                // Limpiar el modal
+                if (strategyModalContent) {
+                    strategyModalContent.innerHTML = '';
+                }
+                if (strategyModal) {
+                    strategyModal.classList.add('hidden');
+                }
+            }
+        });
+        
+        // Insertar el botón al final del div de acciones
+        strategyModalActions.appendChild(newPlanBtn);
+    }
+}
+
+function hideNewPlanButton() {
+    const newPlanBtn = document.getElementById('new-plan-btn');
+    if (newPlanBtn) {
+        newPlanBtn.remove();
+    }
+}
+
+function updateGenerateStrategyButton() {
+    const generateStrategyBtn = document.getElementById('generate-strategy-btn');
+    if (generateStrategyBtn) {
+        const saved = loadStrategyFromStorage();
+        const buttonText = saved ? "📋 Ver Estrategia Guardada" : "⚙️ Generar Estrategia de Implementación";
+        generateStrategyBtn.innerHTML = buttonText;
+    }
+}
+
+async function handleFirstSteps() {
+    const firstStepsResult = document.getElementById('first-steps-result');
+    if (firstStepsResult) {
+        firstStepsResult.innerHTML = '<div class="flex flex-col items-center justify-center h-32"><div class="loader"></div><p class="mt-4 text-gray-600 dark:text-gray-400">Generando primeros pasos prácticos...</p></div>';
+        
+        // Obtener datos del negocio desde la estrategia guardada o desde los formularios
+        const saved = loadStrategyFromStorage();
+        let businessData;
+        
+        if (saved && saved.businessData) {
+            businessData = saved.businessData;
+        } else {
+            // Obtener datos de los formularios
+            const companyType = companyTypeSelector?.options[companyTypeSelector.selectedIndex]?.text || '';
+            const sector = sectorSelector?.options[sectorSelector.selectedIndex]?.text || '';
+            let businessActivity = businessActivitySelector?.options[businessActivitySelector.selectedIndex]?.text || '';
+            
+            if (businessActivitySelector?.value === 'otro' && otherActivityInput?.value.trim()) {
+                businessActivity = otherActivityInput.value.trim();
+            }
+            
+            businessData = {
+                companyType,
+                sector,
+                businessActivity,
+                businessDescription: businessDescriptionInput?.value || '',
+                improvementGoal: improvementGoalInput?.value || '',
+                currentProblem: currentProblemInput?.value || '',
+                toolNames: 'las herramientas recomendadas'
+            };
+        }
+        
+        // Prompt dinámico para primeros pasos
+        const firstStepsPrompt = `Actúa como un experto en ${businessData.toolNames} para PYMES colombianas. Basado en este perfil de empresa: Tipo de Empresa: ${businessData.companyType}, Sector: ${businessData.sector}, Actividad: ${businessData.businessActivity}, Descripción: ${businessData.businessDescription}, Objetivo: ${businessData.improvementGoal}, Desafío: ${businessData.currentProblem}. Genera 3 ejemplos prácticos y listos para usar que ayuden a la empresa a dar sus primeros pasos con la herramienta recomendada. Si es de marketing, crea borradores de publicaciones; si es de productividad, redacta un email de presentación; si es de ventas, crea una plantilla de WhatsApp Business. Responde en HTML simple (<ul>, <li>, <strong>, <p>).`;
+        
+        const apiUrl = `${GEMINI_CONFIG.baseUrl}?key=${GEMINI_CONFIG.apiKey}`;
+        const payload = { contents: [{ parts: [{ text: firstStepsPrompt }] }] };
+        
+        try {
+            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+            const result = await response.json();
+            let stepsText = result.candidates && result.candidates[0]?.content.parts[0].text ? result.candidates[0].content.parts[0].text : '';
+            stepsText = stepsText.replace(/^```html\s*|^```\s*/i, '');
+            firstStepsResult.innerHTML = `<h3 style='font-size:1.3rem;font-weight:700;margin-bottom:1rem;color:#059669;'>Primeros pasos prácticos</h3>` + stepsText;
+        } catch (error) {
+            firstStepsResult.innerHTML = `<p class='text-red-500'>No se pudieron generar los primeros pasos. Intenta de nuevo.</p>`;
+        }
+    }
+}
+
 // === PROTECCIÓN DE RUTA: SOLO USUARIOS AUTENTICADOS ===
 const loader = document.getElementById('global-loader');
 auth.onAuthStateChanged(function(user) {
@@ -116,6 +290,8 @@ auth.onAuthStateChanged(function(user) {
     setupProfileMenu();
     // Cargar datos del perfil del usuario
     loadUserProfile();
+    // Cargar estrategia guardada si existe
+    loadStrategyFromStorage();
     console.log('Aplicación configurada correctamente');
     // --- FIN DE INICIALIZACIÓN PRINCIPAL ---
   }
@@ -562,10 +738,21 @@ function setupEventListeners() {
     document.addEventListener('click', (e) => {
         const generateStrategyBtn = e.target.closest('#generate-strategy-btn');
         if (generateStrategyBtn) {
-            const currentTools = Array.from(document.querySelectorAll('.recommended-tool-card')).map(card => card.getAttribute('data-tool-key'));
-            const improvementGoal = improvementGoalInput?.value || '';
-            const currentProblem = currentProblemInput?.value || '';
-            generateStrategy(currentTools, improvementGoal, currentProblem);
+            // Verificar si hay una estrategia guardada
+            const saved = loadStrategyFromStorage();
+            if (saved) {
+                // Mostrar estrategia guardada
+                if (strategyModal) {
+                    strategyModal.classList.remove('hidden');
+                    displaySavedStrategy();
+                }
+            } else {
+                // Generar nueva estrategia
+                const currentTools = Array.from(document.querySelectorAll('.recommended-tool-card')).map(card => card.getAttribute('data-tool-key'));
+                const improvementGoal = improvementGoalInput?.value || '';
+                const currentProblem = currentProblemInput?.value || '';
+                generateStrategy(currentTools, improvementGoal, currentProblem);
+            }
         }
     });
 
@@ -751,7 +938,11 @@ function updateRecommendation() {
     // Área para volver a agregar IAs eliminadas
     toolsHTML += '<div id="restore-removed-tools" class="flex flex-wrap justify-center gap-2 mt-4"></div>';
 
-    const strategyButtonHTML = `<div class="mt-6 text-center"><button id="generate-strategy-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-300">⚙️ Generar Estrategia de Implementación</button></div>`;
+    // Verificar si hay una estrategia guardada para cambiar el texto del botón
+    const saved = loadStrategyFromStorage();
+    const buttonText = saved ? "📋 Ver Estrategia Guardada" : "⚙️ Generar Estrategia de Implementación";
+    
+    const strategyButtonHTML = `<div class="mt-6 text-center"><button id="generate-strategy-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-300">${buttonText}</button></div>`;
 
     recommendationResultContainer.innerHTML = `<p class="text-center text-gray-600 dark:text-gray-400">${justification}</p>${toolsHTML}${strategyButtonHTML}`;
 
@@ -909,11 +1100,49 @@ Genera un plan de implementación detallado. La respuesta DEBE ser en formato HT
             strategyText = strategyText.replace(/<div class="flex justify-center mt-8">[\s\S]*?<\/div>/gi, '');
             // Agregar título principal si no existe
             if (!/^<h1/i.test(strategyText.trim())) {
-                strategyText = `<h1 style="font-size:2.2rem;font-weight:800;margin-bottom:1.5rem;text-align:center;color:#374151;">Estrategia de implementación</h1>` + strategyText;
+                strategyText = `<h1 style="font-size:2.2rem;font-weight:800;margin-bottom:1.5rem;text-align:center;" class="text-gray-900 dark:text-white">Estrategia de implementación</h1>` + strategyText;
             }
-            // Agregar botón de primeros pasos
-            strategyText += `<div class="flex justify-center mt-8"><button id="first-steps-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transition-colors flex items-center gap-2"><span>🚀 ¡Ayúdame a empezar!</span></button></div><div id="first-steps-result" class="mt-8"></div>`;
+            // Agregar div para resultados de primeros pasos
+            strategyText += `<div id="first-steps-result" class="mt-8"></div>`;
             strategyModalContent.innerHTML = strategyText;
+            
+            // Guardar estrategia en localStorage
+            const businessData = {
+                companyType,
+                sector,
+                businessActivity,
+                businessDescription,
+                improvementGoal,
+                currentProblem,
+                toolNames
+            };
+            
+            saveStrategyToStorage({
+                content: strategyText,
+                businessData: businessData
+            });
+            
+            // Actualizar el texto del botón
+            updateGenerateStrategyButton();
+            
+            // Agregar botón de primeros pasos al div de acciones
+            const strategyModalActions = document.getElementById('strategy-modal-actions');
+            if (strategyModalActions) {
+                // Eliminar botón existente si ya existe
+                const existingBtn = document.getElementById('first-steps-btn');
+                if (existingBtn) {
+                    existingBtn.remove();
+                }
+                
+                const firstStepsBtn = document.createElement('button');
+                firstStepsBtn.id = 'first-steps-btn';
+                firstStepsBtn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 w-48 rounded-full shadow-2xl transition-colors text-base flex items-center justify-center gap-2';
+                firstStepsBtn.style.boxShadow = '0 8px 32px rgba(16,185,129,0.25)';
+                firstStepsBtn.innerHTML = '<span>Ayúdame a empezar</span>';
+                
+                // Insertar el botón al principio del div de acciones
+                strategyModalActions.insertBefore(firstStepsBtn, strategyModalActions.firstChild);
+            }
             // Evento botón PDF
             const downloadPdfBtn = document.getElementById('download-pdf-btn');
             if (downloadPdfBtn) {
@@ -922,26 +1151,11 @@ Genera un plan de implementación detallado. La respuesta DEBE ser en formato HT
             // Evento botón primeros pasos
             const firstStepsBtn = document.getElementById('first-steps-btn');
             if (firstStepsBtn) {
-                firstStepsBtn.addEventListener('click', async () => {
-                    const firstStepsResult = document.getElementById('first-steps-result');
-                    if (firstStepsResult) {
-                        firstStepsResult.innerHTML = '<div class="flex flex-col items-center justify-center h-32"><div class="loader"></div><p class="mt-4 text-gray-600 dark:text-gray-400">Generando primeros pasos prácticos...</p></div>';
-                        // Prompt dinámico para primeros pasos
-                        const firstStepsPrompt = `Actúa como un experto en la herramienta ${toolNames} para PYMES colombianas. Basado en este perfil de empresa: Tipo de Empresa: ${companyType}, Sector: ${sector}, Actividad: ${businessActivity}, Descripción: ${businessDescription}, Objetivo: ${improvementGoal}, Desafío: ${currentProblem}. Genera 3 ejemplos prácticos y listos para usar que ayuden a la empresa a dar sus primeros pasos con la herramienta recomendada. Si es de marketing, crea borradores de publicaciones; si es de productividad, redacta un email de presentación; si es de ventas, crea una plantilla de WhatsApp Business. Responde en HTML simple (<ul>, <li>, <strong>, <p>).`;
-                        const payload = { contents: [{ parts: [{ text: firstStepsPrompt }] }] };
-                        try {
-                            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                            if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
-                            const result = await response.json();
-                            let stepsText = result.candidates && result.candidates[0]?.content.parts[0].text ? result.candidates[0].content.parts[0].text : '';
-                            stepsText = stepsText.replace(/^```html\s*|^```\s*/i, '');
-                            firstStepsResult.innerHTML = `<h3 style='font-size:1.3rem;font-weight:700;margin-bottom:1rem;color:#059669;'>Primeros pasos prácticos</h3>` + stepsText;
-                        } catch (error) {
-                            firstStepsResult.innerHTML = `<p class='text-red-500'>No se pudieron generar los primeros pasos. Intenta de nuevo.</p>`;
-                        }
-                    }
-                });
+                firstStepsBtn.addEventListener('click', handleFirstSteps);
             }
+            
+            // Mostrar botón "Generar nuevo plan"
+            showNewPlanButton();
         } else {
             strategyModalContent.innerHTML = `<p class="text-red-500">No se pudo generar una estrategia. La respuesta de la IA no fue válida.</p>`;
         }
@@ -955,120 +1169,190 @@ async function downloadPDF() {
     const content = document.getElementById('strategy-modal-content');
     if (!content) return;
 
-    // Medidas PDF A4 en px (a 96dpi aprox)
-    const PDF_WIDTH = 595;
-    const PDF_HEIGHT = 842;
-    const HEADER_HEIGHT = Math.floor(PDF_HEIGHT * 0.1); // 10% cabecera
-    const FOOTER_HEIGHT = Math.floor(PDF_HEIGHT * 0.06); // 6% pie
-    const CONTENT_HEIGHT = PDF_HEIGHT - HEADER_HEIGHT - FOOTER_HEIGHT;
-    const SCALE_FACTOR = 3;
-    const PAGE_MARGIN = 24 * SCALE_FACTOR; // 24px de margen arriba y abajo
-
-    // Cargar imágenes de cabecera y pie
-    const loadImage = src => new Promise(resolve => { const img = new window.Image(); img.src = src; img.onload = () => resolve(img); });
-    const headerImg = await loadImage('img/image001.png');
-    const footerImg = await loadImage('img/image003.png');
-
-    // Clonar el contenido para no afectar el DOM
-    const clone = content.cloneNode(true);
-    clone.style.background = '#fff';
-    clone.style.color = '#000';
-    clone.style.fontSize = '11pt';
-    clone.style.lineHeight = '1.6';
-    clone.style.padding = '20px';
-    clone.style.width = content.offsetWidth + 'px';
-    clone.style.boxSizing = 'border-box';
-    clone.style.position = 'absolute';
-    clone.style.left = '-9999px';
-    // Forzar estilos en todos los elementos
-    clone.querySelectorAll('*').forEach(el => {
-        el.style.color = '#000';
-        el.style.fontSize = '11pt';
-        el.style.lineHeight = '1.6';
-        if (el.tagName === 'H1') {
-            el.style.fontSize = '16pt';
-            el.style.fontWeight = 'bold';
-        }
-        if (el.tagName === 'H2' || el.tagName === 'H3') {
-            el.style.fontSize = '14pt';
-            el.style.fontWeight = 'bold';
-        }
-    });
-    document.body.appendChild(clone);
-
-    // Medir el alto total del contenido clonado
-    const totalHeight = clone.scrollHeight;
-    const numPages = Math.ceil(totalHeight / CONTENT_HEIGHT);
-
-    // Crear PDF
-    const pdf = new window.jspdf.jsPDF({ orientation: 'p', unit: 'pt', format: 'a4', compress: true });
-
-    for (let i = 0; i < numPages; i++) {
-        if (i > 0) pdf.addPage();
-
-        // Crear slice temporal
-        const slice = clone.cloneNode(true);
-        slice.style.height = CONTENT_HEIGHT + 'px';
-        slice.style.overflow = 'hidden';
-        slice.scrollTop = i * CONTENT_HEIGHT;
-        slice.style.position = 'absolute';
-        slice.style.top = '-9999px';
-        slice.style.left = '-9999px';
-        // Forzar estilos en todos los elementos del slice
-        slice.querySelectorAll('*').forEach(el => {
-            el.style.color = '#000';
-            el.style.fontSize = '11pt';
-            el.style.lineHeight = '1.6';
-            if (el.tagName === 'H1') {
-                el.style.fontSize = '16pt';
-                el.style.fontWeight = 'bold';
-            }
-            if (el.tagName === 'H2' || el.tagName === 'H3') {
-                el.style.fontSize = '14pt';
-                el.style.fontWeight = 'bold';
-            }
-        });
-        document.body.appendChild(slice);
-
-        // Scroll el slice para mostrar la parte correcta
-        slice.scrollTop = i * CONTENT_HEIGHT;
-
-        // Renderizar slice con mayor escala para nitidez
-        const sliceCanvas = await html2canvas(slice, { backgroundColor: null, scale: SCALE_FACTOR, useCORS: true });
-        document.body.removeChild(slice);
-
-        // Crear canvas final para la página (3x resolución)
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = PDF_WIDTH * SCALE_FACTOR;
-        pageCanvas.height = PDF_HEIGHT * SCALE_FACTOR;
-        const ctx = pageCanvas.getContext('2d');
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-        // Cabecera
-        ctx.drawImage(headerImg, 0, 0, pageCanvas.width, HEADER_HEIGHT * SCALE_FACTOR);
-        // Contenido con margen arriba y espacio extra antes del pie
-        ctx.drawImage(
-            sliceCanvas,
-            0, 0, sliceCanvas.width, sliceCanvas.height,
-            0, HEADER_HEIGHT * SCALE_FACTOR + PAGE_MARGIN,
-            pageCanvas.width,
-            CONTENT_HEIGHT * SCALE_FACTOR - 2 * PAGE_MARGIN - FOOTER_HEIGHT * SCALE_FACTOR
-        );
-        // Pie (más delgado)
-        ctx.drawImage(footerImg, 0, pageCanvas.height - FOOTER_HEIGHT * SCALE_FACTOR, pageCanvas.width, FOOTER_HEIGHT * SCALE_FACTOR);
-
-        // Agregar al PDF (escalando a tamaño real)
-        pdf.addImage(
-            pageCanvas.toDataURL('image/png', 1.0),
-            'PNG',
-            0, 0, PDF_WIDTH, PDF_HEIGHT
-        );
+    // Deshabilitar botón de descarga
+    const downloadBtn = document.getElementById('download-pdf-btn');
+    if (downloadBtn) {
+        downloadBtn.disabled = true;
+        downloadBtn.style.opacity = '0.5';
+        downloadBtn.textContent = 'Generando...';
     }
 
-    // Limpiar
-    document.body.removeChild(clone);
+    // Mostrar indicador de progreso
+    const progressIndicator = document.createElement('div');
+    progressIndicator.innerHTML = `
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[70]">
+            <div class="bg-white rounded-lg p-6 text-center">
+                <div class="loader mb-4"></div>
+                <p class="text-gray-700">Generando PDF...</p>
+                <div class="mt-2 text-sm text-gray-500">Esto puede tardar unos momentos</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(progressIndicator);
 
-    pdf.save('plan-accion-ia.pdf');
+    try {
+        // Medidas PDF A4 en px (a 96dpi aprox)
+        const PDF_WIDTH = 595;
+        const PDF_HEIGHT = 842;
+        const HEADER_HEIGHT = Math.floor(PDF_HEIGHT * 0.14); // 14% cabecera (más larga)
+        const FOOTER_HEIGHT = Math.floor(PDF_HEIGHT * 0.06); // 6% pie
+        const CONTENT_HEIGHT = PDF_HEIGHT - HEADER_HEIGHT - FOOTER_HEIGHT;
+        const SCALE_FACTOR = 2; // Reducido de 3 a 2 para mejor rendimiento
+        const PAGE_MARGIN = 24 * SCALE_FACTOR; // 24px de margen arriba y abajo
+
+        // Cargar imágenes de cabecera y pie de forma paralela
+        const loadImage = src => new Promise(resolve => { const img = new window.Image(); img.src = src; img.onload = () => resolve(img); });
+        const [headerLeftImg, headerRightImg, footerImg] = await Promise.all([
+            loadImage('img/plantilla-pdf-ue.png'),
+            loadImage('img/fuso-plantilla-pdf.png'),
+            loadImage('img/image003.png')
+        ]);
+
+            // Clonar el contenido para no afectar el DOM
+        const clone = content.cloneNode(true);
+        
+        // Aplicar estilos optimizados una sola vez
+        const applyStyles = (element) => {
+            element.style.background = '#fff';
+            element.style.color = '#000';
+            element.style.fontSize = '11pt';
+            element.style.lineHeight = '1.6';
+            element.style.padding = '20px';
+            element.style.width = content.offsetWidth + 'px';
+            element.style.boxSizing = 'border-box';
+            element.style.position = 'absolute';
+            element.style.left = '-9999px';
+            element.style.top = '-9999px';
+            
+            // Aplicar estilos a elementos hijos de forma más eficiente
+            const style = document.createElement('style');
+            style.textContent = `
+                * { color: #000 !important; font-size: 11pt !important; line-height: 1.6 !important; }
+                h1 { font-size: 16pt !important; font-weight: bold !important; }
+                h2, h3 { font-size: 14pt !important; font-weight: bold !important; }
+                #first-steps-result { display: none !important; }
+            `;
+            element.appendChild(style);
+        };
+        
+        applyStyles(clone);
+        document.body.appendChild(clone);
+
+            // Remover contenido innecesario que puede hacer lento el procesamiento
+        const firstStepsResult = clone.querySelector('#first-steps-result');
+        if (firstStepsResult) {
+            firstStepsResult.remove();
+        }
+        
+        // Medir el alto total del contenido clonado
+        const totalHeight = clone.scrollHeight;
+        const numPages = Math.max(1, Math.ceil(totalHeight / CONTENT_HEIGHT));
+
+        // Crear PDF
+        const pdf = new window.jspdf.jsPDF({ orientation: 'p', unit: 'pt', format: 'a4', compress: true });
+
+        // Renderizar todo el contenido una sola vez con html2canvas
+        const fullCanvas = await html2canvas(clone, { 
+            backgroundColor: '#ffffff', 
+            scale: SCALE_FACTOR, 
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            letterRendering: true
+        });
+
+        for (let i = 0; i < numPages; i++) {
+            if (i > 0) pdf.addPage();
+            
+            // Actualizar progreso
+            const progressText = progressIndicator.querySelector('.text-gray-500');
+            if (progressText) {
+                progressText.textContent = `Procesando página ${i + 1} de ${numPages}`;
+            }
+            
+            // Pequeño delay para permitir que el DOM se actualice
+            await new Promise(resolve => setTimeout(resolve, 10));
+
+            // Crear canvas final para la página
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = PDF_WIDTH * SCALE_FACTOR;
+            pageCanvas.height = PDF_HEIGHT * SCALE_FACTOR;
+            const ctx = pageCanvas.getContext('2d');
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+            
+            // Cabecera con dos imágenes
+            // Limpiar área de cabecera con fondo blanco
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, pageCanvas.width, HEADER_HEIGHT * SCALE_FACTOR);
+            
+            // Calcular dimensiones para las imágenes de cabecera (más anchas y menos altas)
+            const headerImageHeight = HEADER_HEIGHT * SCALE_FACTOR * 0.65; // 65% de la altura de la cabecera (menos altas)
+            const headerImageWidth = pageCanvas.width * 0.42; // 42% del ancho para cada imagen (más anchas)
+            const verticalOffset = (HEADER_HEIGHT * SCALE_FACTOR - headerImageHeight) / 2; // Centrar verticalmente
+            
+            // Calcular posiciones para centrar las imágenes
+            const totalImagesWidth = headerImageWidth * 2;
+            const gap = pageCanvas.width * 0.03; // 3% de separación entre imágenes (ajustado para imágenes más anchas)
+            const startX = (pageCanvas.width - totalImagesWidth - gap) / 2;
+            
+            // Imagen izquierda (plantilla-pdf-ue)
+            ctx.drawImage(headerLeftImg, startX, verticalOffset, headerImageWidth, headerImageHeight);
+            
+            // Imagen derecha (fuso-plantilla-pdf)
+            const rightImageX = startX + headerImageWidth + gap;
+            ctx.drawImage(headerRightImg, rightImageX, verticalOffset, headerImageWidth, headerImageHeight);
+            
+            // Contenido - cortar la porción correspondiente del canvas completo
+            const sourceY = i * CONTENT_HEIGHT * SCALE_FACTOR;
+            const sourceHeight = Math.min(CONTENT_HEIGHT * SCALE_FACTOR, fullCanvas.height - sourceY);
+            
+            if (sourceHeight > 0) {
+                ctx.drawImage(
+                    fullCanvas,
+                    0, sourceY, fullCanvas.width, sourceHeight,
+                    0, HEADER_HEIGHT * SCALE_FACTOR + PAGE_MARGIN,
+                    pageCanvas.width,
+                    sourceHeight
+                );
+            }
+            
+            // Pie (más delgado)
+            ctx.drawImage(footerImg, 0, pageCanvas.height - FOOTER_HEIGHT * SCALE_FACTOR, pageCanvas.width, FOOTER_HEIGHT * SCALE_FACTOR);
+
+            // Agregar al PDF (escalando a tamaño real)
+            pdf.addImage(
+                pageCanvas.toDataURL('image/png', 0.8), // Reducir calidad para mejor rendimiento
+                'PNG',
+                0, 0, PDF_WIDTH, PDF_HEIGHT
+            );
+        }
+
+        // Limpiar
+        document.body.removeChild(clone);
+
+        pdf.save('plan-accion-ia.pdf');
+        
+    } catch (error) {
+        console.error('Error generando PDF:', error);
+        alert('Error al generar el PDF. Por favor, intenta nuevamente.');
+    } finally {
+        // Remover indicador de progreso
+        document.body.removeChild(progressIndicator);
+        
+        // Restaurar botón de descarga
+        const downloadBtn = document.getElementById('download-pdf-btn');
+        if (downloadBtn) {
+            downloadBtn.disabled = false;
+            downloadBtn.style.opacity = '1';
+            downloadBtn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                Descargar PDF
+            `;
+        }
+    }
 }
 
 function startAutoRotateTools() {

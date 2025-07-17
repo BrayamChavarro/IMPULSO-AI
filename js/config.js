@@ -12,7 +12,7 @@ const EMAIL_CONFIG = {
 
 // Configuración de Gemini API
 window.GEMINI_CONFIG = {
-    apiKey: 'AIzaSyCJdg_PeUC1OwgY7fpDFXJ5AtjVn3ni4Dg',
+    apiKey: 'AIzaSyDXCscGeo7FV2XVWmNk8FKnkSxxYUmSipU',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 };
 
