@@ -1184,7 +1184,7 @@ async function downloadPDF() {
             <div class="bg-white rounded-lg p-6 text-center">
                 <div class="loader mb-4"></div>
                 <p class="text-gray-700">Generando PDF...</p>
-                <div class="mt-2 text-sm text-gray-500">Esto puede tardar unos momentos</div>
+                <div class="mt-2 text-sm text-gray-500">Preparando contenido...</div>
             </div>
         </div>
     `;
@@ -1196,9 +1196,10 @@ async function downloadPDF() {
         const PDF_HEIGHT = 842;
         const HEADER_HEIGHT = Math.floor(PDF_HEIGHT * 0.14); // 14% cabecera (más larga)
         const FOOTER_HEIGHT = Math.floor(PDF_HEIGHT * 0.06); // 6% pie
-        const CONTENT_HEIGHT = PDF_HEIGHT - HEADER_HEIGHT - FOOTER_HEIGHT;
         const SCALE_FACTOR = 2; // Reducido de 3 a 2 para mejor rendimiento
-        const PAGE_MARGIN = 24 * SCALE_FACTOR; // 24px de margen arriba y abajo
+        const PAGE_MARGIN = 30 * SCALE_FACTOR; // 30px de margen arriba y abajo (optimizado para mejor espaciado)
+        const CONTENT_HEIGHT = PDF_HEIGHT - HEADER_HEIGHT - FOOTER_HEIGHT; // Área total disponible para contenido
+        const EFFECTIVE_CONTENT_HEIGHT = CONTENT_HEIGHT - (PAGE_MARGIN * 2 / SCALE_FACTOR); // Área efectiva después de márgenes
 
         // Cargar imágenes de cabecera y pie de forma paralela
         const loadImage = src => new Promise(resolve => { const img = new window.Image(); img.src = src; img.onload = () => resolve(img); });
@@ -1215,9 +1216,10 @@ async function downloadPDF() {
         const applyStyles = (element) => {
             element.style.background = '#fff';
             element.style.color = '#000';
-            element.style.fontSize = '11pt';
+            element.style.fontSize = '10pt';
             element.style.lineHeight = '1.6';
             element.style.padding = '20px';
+            element.style.paddingBottom = '30px'; // Margen inferior moderado
             element.style.width = content.offsetWidth + 'px';
             element.style.boxSizing = 'border-box';
             element.style.position = 'absolute';
@@ -1227,10 +1229,15 @@ async function downloadPDF() {
             // Aplicar estilos a elementos hijos de forma más eficiente
             const style = document.createElement('style');
             style.textContent = `
-                * { color: #000 !important; font-size: 11pt !important; line-height: 1.6 !important; }
-                h1 { font-size: 16pt !important; font-weight: bold !important; }
-                h2, h3 { font-size: 14pt !important; font-weight: bold !important; }
+                * { color: #000 !important; font-size: 10pt !important; line-height: 1.6 !important; margin-bottom: 8px !important; }
+                h1 { font-size: 15pt !important; font-weight: bold !important; margin-bottom: 15px !important; }
+                h2, h3 { font-size: 13pt !important; font-weight: bold !important; margin-bottom: 12px !important; }
+                p { margin-bottom: 10px !important; }
+                ul, ol { margin-bottom: 12px !important; }
+                li { margin-bottom: 6px !important; }
                 #first-steps-result { display: none !important; }
+                body { margin-bottom: 25px !important; }
+                .content-wrapper { padding-bottom: 25px !important; }
             `;
             element.appendChild(style);
         };
@@ -1244,9 +1251,37 @@ async function downloadPDF() {
             firstStepsResult.remove();
         }
         
-        // Medir el alto total del contenido clonado
-        const totalHeight = clone.scrollHeight;
-        const numPages = Math.max(1, Math.ceil(totalHeight / CONTENT_HEIGHT));
+        // Esperar a que el DOM se actualice y medir correctamente
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Medir el alto total del contenido clonado de múltiples formas
+        const totalHeight = Math.max(
+            clone.scrollHeight,
+            clone.offsetHeight,
+            clone.getBoundingClientRect().height
+        );
+        
+        // Usar un margen más conservador para el cálculo de páginas
+        const pageContentHeight = EFFECTIVE_CONTENT_HEIGHT * SCALE_FACTOR;
+        let numPages = Math.max(1, Math.ceil(totalHeight / pageContentHeight));
+        
+        // Verificación adicional: si el contenido es muy largo, ajustar el número de páginas
+        if (totalHeight > numPages * pageContentHeight) {
+            numPages = Math.ceil(totalHeight / pageContentHeight) + 1;
+        }
+        
+        console.log('PDF Debug:', {
+            totalHeight,
+            scrollHeight: clone.scrollHeight,
+            offsetHeight: clone.offsetHeight,
+            boundingHeight: clone.getBoundingClientRect().height,
+            CONTENT_HEIGHT,
+            EFFECTIVE_CONTENT_HEIGHT,
+            SCALE_FACTOR,
+            PAGE_MARGIN,
+            pageContentHeight,
+            estimatedPages: numPages
+        });
 
         // Crear PDF
         const pdf = new window.jspdf.jsPDF({ orientation: 'p', unit: 'pt', format: 'a4', compress: true });
@@ -1258,16 +1293,48 @@ async function downloadPDF() {
             useCORS: true,
             allowTaint: true,
             logging: false,
-            letterRendering: true
+            letterRendering: true,
+            height: totalHeight + 100, // Agregar margen extra para asegurar captura completa
+            width: clone.scrollWidth,
+            scrollX: 0,
+            scrollY: 0
+        });
+        
+        console.log('Canvas Debug:', {
+            canvasWidth: fullCanvas.width,
+            canvasHeight: fullCanvas.height,
+            expectedHeight: totalHeight * SCALE_FACTOR,
+            cloneWidth: clone.scrollWidth,
+            cloneHeight: totalHeight
         });
 
-        for (let i = 0; i < numPages; i++) {
-            if (i > 0) pdf.addPage();
+        // Procesar páginas mientras haya contenido
+        let currentPage = 0;
+        let processedHeight = 0;
+        
+        // Calcular número real de páginas basado en el contenido actual
+        const calculateRealPages = () => {
+            return Math.ceil(fullCanvas.height / pageContentHeight);
+        };
+        
+        const realNumPages = calculateRealPages();
+        
+        // Mostrar información inicial
+        let progressText = progressIndicator.querySelector('.text-gray-500');
+        if (progressText) {
+            progressText.textContent = `Iniciando procesamiento de ${realNumPages} página${realNumPages > 1 ? 's' : ''}...`;
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 500)); // Pequeña pausa para mostrar el mensaje
+        
+        while (processedHeight < fullCanvas.height && currentPage < realNumPages + 1) { // +1 como margen de seguridad
+            if (currentPage > 0) pdf.addPage();
             
-            // Actualizar progreso
-            const progressText = progressIndicator.querySelector('.text-gray-500');
+            // Actualizar progreso con información más precisa
+            progressText = progressIndicator.querySelector('.text-gray-500');
             if (progressText) {
-                progressText.textContent = `Procesando página ${i + 1} de ${numPages}`;
+                const progressPercentage = Math.round((processedHeight / fullCanvas.height) * 100);
+                progressText.textContent = `Procesando página ${currentPage + 1} de ${realNumPages} (${progressPercentage}%)`;
             }
             
             // Pequeño delay para permitir que el DOM se actualice
@@ -1304,17 +1371,40 @@ async function downloadPDF() {
             ctx.drawImage(headerRightImg, rightImageX, verticalOffset, headerImageWidth, headerImageHeight);
             
             // Contenido - cortar la porción correspondiente del canvas completo
-            const sourceY = i * CONTENT_HEIGHT * SCALE_FACTOR;
-            const sourceHeight = Math.min(CONTENT_HEIGHT * SCALE_FACTOR, fullCanvas.height - sourceY);
+            const sourceY = processedHeight;
+            const remainingHeight = fullCanvas.height - sourceY;
+            const sourceHeight = Math.min(pageContentHeight, remainingHeight);
+            
+            console.log(`Página ${currentPage + 1}:`, {
+                sourceY,
+                sourceHeight,
+                remainingHeight,
+                pageContentHeight,
+                fullCanvasHeight: fullCanvas.height,
+                processedHeight
+            });
             
             if (sourceHeight > 0) {
+                // Asegurar que el contenido se dibuje en el área correcta con margen inferior
+                const maxContentHeight = pageCanvas.height - HEADER_HEIGHT * SCALE_FACTOR - FOOTER_HEIGHT * SCALE_FACTOR - (PAGE_MARGIN * 2);
+                const finalHeight = Math.min(sourceHeight, maxContentHeight);
+                
                 ctx.drawImage(
                     fullCanvas,
-                    0, sourceY, fullCanvas.width, sourceHeight,
+                    0, sourceY, fullCanvas.width, finalHeight,
                     0, HEADER_HEIGHT * SCALE_FACTOR + PAGE_MARGIN,
                     pageCanvas.width,
-                    sourceHeight
+                    finalHeight
                 );
+                
+                console.log(`Página ${currentPage + 1} renderizada:`, {
+                    finalHeight,
+                    maxContentHeight,
+                    position: HEADER_HEIGHT * SCALE_FACTOR + PAGE_MARGIN
+                });
+                
+                // Actualizar altura procesada
+                processedHeight += finalHeight;
             }
             
             // Pie (más delgado)
@@ -1326,7 +1416,33 @@ async function downloadPDF() {
                 'PNG',
                 0, 0, PDF_WIDTH, PDF_HEIGHT
             );
+            
+            currentPage++;
+            
+            // Actualizar progreso después de completar la página
+            progressText = progressIndicator.querySelector('.text-gray-500');
+            if (progressText) {
+                const progressPercentage = Math.round((processedHeight / fullCanvas.height) * 100);
+                const remainingHeight = fullCanvas.height - processedHeight;
+                const isLastPage = remainingHeight <= 0;
+                
+                if (isLastPage) {
+                    progressText.textContent = `Finalizando PDF... (100%)`;
+                } else {
+                    progressText.textContent = `Página ${currentPage} de ${realNumPages} completada (${progressPercentage}%)`;
+                }
+            }
         }
+
+        console.log('PDF Generado - Estadísticas finales:', {
+            totalPagesGenerated: currentPage,
+            originalEstimatedPages: numPages,
+            realCalculatedPages: realNumPages,
+            totalContentHeight: totalHeight,
+            processedHeight: processedHeight,
+            fullCanvasHeight: fullCanvas.height,
+            contentCaptured: `${((processedHeight / fullCanvas.height) * 100).toFixed(1)}%`
+        });
 
         // Limpiar
         document.body.removeChild(clone);

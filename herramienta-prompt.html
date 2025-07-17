@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Prompts para PYMES - Impulso IA</title>
+    
+    <!-- External CDN Scripts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilos del tema oscuro personalizados */
+        .dark {
+            color-scheme: dark;
+        }
+        
+        /* Script para manejar el tema */
+        .copy-button.copied {
+            background-color: #059669;
+        }
+
+        /* Estilos del Resultado */
+        .prompt-output-container {
+            background-color: #161b22;
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+        }
+
+        .prompt-output-container h2 {
+            color: #f0f6fc;
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .prompt-display {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 120px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #c9d1d9;
+            margin-bottom: 20px;
+        }
+
+        .copy-button {
+            display: none; /* Oculto por defecto */
+            width: 100%;
+            padding: 15px;
+            background-color: #238636;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        .copy-button:hover {
+            background-color: #2ea043;
+            transform: translateY(-2px);
+        }
+
+        .copy-message {
+            margin-top: 15px;
+            text-align: center;
+            color: #3fb950;
+            font-weight: 500;
+            font-size: 0.9em;
+            display: none; /* Oculto por defecto */
+        }
+        
+        /* Estilos de los Iconos LLM */
+        .llm-links-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .llm-link {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 15px;
+            background-color: #161b22;
+            color: #c9d1d9;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            border: 1px solid #30363d;
+        }
+
+        .llm-link:hover {
+            background-color: #21262d;
+            transform: translateY(-3px);
+            border-color: #8b949e;
+        }
+
+        .llm-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+lm-link.deepseek .llm-icon::before { content: 'D'; }
+
+        /* Media Queries para Responsividad */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .App-header h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300">
+    <!-- Top Navigation Bar -->
+    <header class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center">
+                        <svg class="h-8 w-8 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color: #3B82F6;" />
+                                    <stop offset="100%" style="stop-color: #14B8A6;" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M14 20.5V16.5C14 15.3954 13.1046 14.5 12 14.5H10.5M3.5 10H7.5C8.60457 10 9.5 9.10457 9.5 8V3.5" stroke="url(#logo-gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3.5 14H7.5C8.60457 14 9.5 14.8954 9.5 16V20.5" stroke="url(#logo-gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14 3.5V7.5C14 8.60457 14.8954 9.5 16 9.5H20.5" stroke="url(#logo-gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M20.5 14H16.5C15.3954 14 14.5 14.8954 14.5 16V20.5" stroke="url(#logo-gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            
+                            <rect x="10" y="10" width="4" height="4" rx="0.5" stroke="url(#logo-gradient)" stroke-width="1.5"/>
+                            <path d="M12 10V8" stroke="url(#logo-gradient)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M12 14V16" stroke="url(#logo-gradient)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M10 12H8" stroke="url(#logo-gradient)" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M14 12H16" stroke="url(#logo-gradient)" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-2xl font-bold text-blue-600 dark:text-blue-500">Impulso IA</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="window.location.href='index.html'" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium">
+                        ← Volver al inicio
+                    </button>
+                    <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg id="theme-icon-light" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <svg id="theme-icon-dark" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Hero Section -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">🚀 Generador de Prompts</h1>
+            <p class="text-xl text-gray-600 dark:text-gray-400">Herramienta especializada para crear prompts optimizados para PYMES colombianas</p>
+        </div>
+
+        <!-- Formulario para generar el prompt -->
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700">
+                <h2 class="text-3xl font-bold text-center mb-4 text-gray-900 dark:text-white">Generador de Prompts para tu Negocio</h2>
+                <p class="text-center text-gray-600 dark:text-gray-400 mb-8">
+                    Completa los campos para darle contexto a la IA y obtener mejores resultados.
+                </p>
+                <form id="prompt-form" class="space-y-6">
+                    <div>
+                        <label for="contextoNegocio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Describe tu negocio y tu desafío principal:</label>
+                        <textarea id="contextoNegocio" rows="4" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Ej: Somos 'Café El Mejor Sabor S.A.S.', una microempresa que vende café orgánico de origen a clientes finales. Nuestro desafío es aumentar las ventas online y crear contenido atractivo para redes sociales." required></textarea>
+                    </div>
+
+                    <div>
+                        <label for="objetivoPrincipal" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">¿Qué necesitas que la IA haga por ti?</label>
+                        <select id="objetivoPrincipal" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+                            <option value="">Seleccione un objetivo...</option>
+                            <option value="generar ideas para posts en redes sociales (Instagram, Facebook)">Generar ideas para redes sociales</option>
+                            <option value="crear el texto para una campaña de email marketing">Crear un email de marketing</option>
+                            <option value="escribir el guion para un video corto (Reel/TikTok)">Escribir un guion para video corto</option>
+                            <option value="analizar un conjunto de opiniones de clientes para encontrar patrones">Analizar opiniones de clientes</option>
+                            <option value="crear una propuesta de valor para mi negocio">Crear una propuesta de valor</option>
+                            <option value="sugerir estrategias para mejorar la atención al cliente">Sugerir mejoras en atención al cliente</option>
+                            <option value="redactar la descripción de un producto para mi tienda online">Redactar descripción de producto</option>
+                            <option value="generar un plan de contenidos para el próximo mes">Generar un plan de contenidos</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="publicoObjetivo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">¿A quién te diriges?</label>
+                        <input type="text" id="publicoObjetivo" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Ej: Amantes del café, de 25 a 45 años, que valoran los productos sostenibles." required />
+                    </div>
+
+                    <div>
+                        <label for="tonoComunicacion" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tono de Comunicación:</label>
+                        <select id="tonoComunicacion" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+                            <option value="">Seleccione un tono...</option>
+                            <option value="profesional y corporativo">Profesional y corporativo</option>
+                            <option value="amigable y cercano">Amigable y cercano</option>
+                            <option value="divertido e informal">Divertido e informal</option>
+                            <option value="inspirador y motivacional">Inspirador y motivacional</option>
+                            <option value="directo y persuasivo">Directo y persuasivo</option>
+                            <option value="educativo y claro">Educativo y claro</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="formatoSalida" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Formato de Salida Deseado:</label>
+                        <select id="formatoSalida" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+                            <option value="">Seleccione un formato...</option>
+                            <option value="lista de puntos clave (bullets)">Lista de puntos clave</option>
+                            <option value="una tabla comparativa">Tabla comparativa</option>
+                            <option value="un borrador de email">Borrador de Email</option>
+                            <option value="un guion para video">Guion para video</option>
+                            <option value="un post para blog">Post para blog</option>
+                            <option value="varias opciones de slogans o titulares">Opciones de Slogans/Titulares</option>
+                            <option value="texto plano y conciso">Texto plano</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="informacionAdicional" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Información Adicional (Opcional):</label>
+                        <textarea id="informacionAdicional" rows="3" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Ej: Mencionar que tenemos envío gratis en compras superiores a $50. No usar un lenguaje demasiado técnico."></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">Generar Prompt</button>
+                </form>
+            </div>
+
+            <!-- Contenedor para mostrar el resultado -->
+            <div class="prompt-output-container">
+                <h2>Prompt Generado para IA</h2>
+                <div id="prompt-display" class="prompt-display">Tu prompt generado aparecerá aquí. Completa el formulario y haz clic en "Generar Prompt".</div>
+                <button id="copy-button" class="copy-button">Copiar Prompt</button>
+                <p id="copy-message" class="copy-message">¡Prompt copiado al portapapeles!</p>
+            </div>
+
+            
+        </main>
+
+        <footer class="App-footer">
+            <p>© 2025 Impulso.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Se ejecuta cuando el contenido de la página se ha cargado
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Obtener referencias a los elementos del DOM
+            const form = document.getElementById('prompt-form');
+            const promptDisplay = document.getElementById('prompt-display');
+            const copyButton = document.getElementById('copy-button');
+            const copyMessage = document.getElementById('copy-message');
+
+            // Escuchar el evento de envío del formulario
+            form.addEventListener('submit', (event) => {
+                event.preventDefault(); // Evitar que la página se recargue
+
+                // Obtener los valores de los campos del formulario
+                const contextoNegocio = document.getElementById('contextoNegocio').value;
+                const objetivoPrincipal = document.getElementById('objetivoPrincipal').value;
+                const publicoObjetivo = document.getElementById('publicoObjetivo').value;
+                const tonoComunicacion = document.getElementById('tonoComunicacion').value;
+                const formatoSalida = document.getElementById('formatoSalida').value;
+                const informacionAdicional = document.getElementById('informacionAdicional').value;
+
+                // Construir el prompt
+                let prompt = `Actúa como un asistente experto en estrategia de negocios y marketing digital para Pequeñas y Medianas Empresas (PYMES).`;
+                prompt += `\n\n**Contexto del Negocio:**\n${contextoNegocio || '[Describe aquí tu negocio]'}`;
+                prompt += `\n\n**Objetivo Principal:**\nNecesito que me ayudes a ${objetivoPrincipal}.`;
+                prompt += `\n\n**Público Objetivo:**\nEl contenido o la estrategia debe estar dirigida a: ${publicoObjetivo}.`;
+                prompt += `\n\n**Tono de Comunicación:**\nUtiliza un tono ${tonoComunicacion}.`;
+                prompt += `\n\n**Formato de Salida:**\nPresenta la respuesta en formato de ${formatoSalida}.`;
+                if (informacionAdicional) {
+                    prompt += `\n\n**Información Adicional a Considerar:**\n${informacionAdicional}`;
+                }
+                prompt += `\n\nAsegúrate de que la respuesta sea práctica, accionable y fácil de entender para un dueño de PYME.`;
+
+                // Mostrar el prompt generado
+                promptDisplay.textContent = prompt;
+                copyButton.style.display = 'block'; // Mostrar el botón de copiar
+            });
+
+            // Escuchar el evento de clic en el botón de copiar
+            copyButton.addEventListener('click', () => {
+                const textToCopy = promptDisplay.textContent;
+
+                // Crear un textarea temporal para copiar el texto
+                const textarea = document.createElement('textarea');
+                textarea.value = textToCopy;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy'); // Copiar al portapapeles
+                    copyMessage.style.display = 'block'; // Mostrar mensaje de éxito
+                    setTimeout(() => {
+                        copyMessage.style.display = 'none'; // Ocultar mensaje después de 3 segundos
+                    }, 3000);
+                } catch (err) {
+                    console.error('Error al copiar el prompt:', err);
+                    alert('No se pudo copiar el texto.');
+                }
+                document.body.removeChild(textarea); // Eliminar el textarea temporal
+            });
+        });
+    </script>
+
+</body>
+</html>

@@ -232,9 +232,15 @@
                                 <input type="text" id="register-company" class="w-full p-3 rounded-lg login-input" required>
                             </div>
                         </div>
-                        <div>
-                            <label for="register-email" class="block text-gray-400 mb-1">Correo electrónico</label>
-                            <input type="email" id="register-email" class="w-full p-3 rounded-lg login-input" required>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label for="register-email" class="block text-gray-400 mb-1">Correo electrónico</label>
+                                <input type="email" id="register-email" class="w-full p-3 rounded-lg login-input" required>
+                            </div>
+                            <div>
+                                <label for="register-phone" class="block text-gray-400 mb-1">Número de celular</label>
+                                <input type="tel" id="register-phone" class="w-full p-3 rounded-lg login-input" placeholder="+57 300 123 4567" required>
+                            </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
@@ -293,9 +299,15 @@
                             <label for="complete-name" class="block text-gray-400 mb-1">Nombre completo</label>
                             <input type="text" id="complete-name" class="w-full p-3 rounded-lg login-input" required>
                         </div>
-                        <div>
-                            <label for="complete-company" class="block text-gray-400 mb-1">Nombre de empresa</label>
-                            <input type="text" id="complete-company" class="w-full p-3 rounded-lg login-input" required>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label for="complete-company" class="block text-gray-400 mb-1">Nombre de empresa</label>
+                                <input type="text" id="complete-company" class="w-full p-3 rounded-lg login-input" required>
+                            </div>
+                            <div>
+                                <label for="complete-phone" class="block text-gray-400 mb-1">Número de celular</label>
+                                <input type="tel" id="complete-phone" class="w-full p-3 rounded-lg login-input" placeholder="+57 300 123 4567" required>
+                            </div>
                         </div>
                         <button type="submit" class="w-full login-gradient-btn py-3 rounded-lg transition">Finalizar registro</button>
                         <div id="complete-profile-error" class="text-red-500 text-center font-semibold h-5"></div>
@@ -409,6 +421,7 @@
                 const name = document.getElementById('register-name').value;
                 const company = document.getElementById('register-company').value;
                 const email = document.getElementById('register-email').value;
+                const phone = document.getElementById('register-phone').value;
                 const password = document.getElementById('register-password').value;
                 const confirmPassword = document.getElementById('register-confirm-password').value;
 
@@ -428,6 +441,7 @@
                     await db.collection('users').doc(user.uid).set({
                         name: name,
                         company: company,
+                        phone: phone,
                         email: user.email,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -467,8 +481,9 @@
                 
                 const name = document.getElementById('complete-name').value;
                 const company = document.getElementById('complete-company').value;
+                const phone = document.getElementById('complete-phone').value;
 
-                if (!name || !company) {
+                if (!name || !company || !phone) {
                     completeProfileErrorDiv.textContent = 'Por favor, completa todos los campos.';
                     return;
                 }
@@ -477,6 +492,7 @@
                     await db.collection('users').doc(user.uid).set({
                         name: name,
                         company: company,
+                        phone: phone,
                         email: user.email,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     }, { merge: true });
