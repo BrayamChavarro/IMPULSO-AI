@@ -58,6 +58,51 @@
             justify-content: center;
             transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
         }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .form-section {
+                padding: 1.5rem; /* Menos padding en móviles */
+                justify-content: flex-start;
+                overflow-y: auto;
+            }
+            
+            #auth-container {
+                margin: 0.5rem;
+                max-width: none;
+                min-height: calc(100vh - 1rem);
+                height: auto;
+            }
+            
+            /* Ocultar panel de branding en móviles */
+            #branding-panel {
+                display: none !important;
+            }
+            
+            /* Formularios ocupan todo el ancho en móviles */
+            #form-panel {
+                width: 100% !important;
+            }
+            
+            /* Contenedor interno adaptable */
+            #form-panel > div {
+                height: auto !important;
+                min-height: calc(100vh - 2rem) !important;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .form-section {
+                padding: 1rem;
+            }
+            
+            /* Hacer formularios scrolleables si es necesario */
+            #auth-container {
+                height: auto;
+                min-height: calc(100vh - 1rem);
+                max-height: calc(100vh - 1rem);
+            }
+        }
 
         /* Estado inicial de los formularios ocultos */
         #register-section, #complete-profile-section {
@@ -105,6 +150,38 @@
             transform: translateX(0);
             pointer-events: auto;
         }
+        
+        /* Responsive states para tablets y móviles */
+        @media (max-width: 768px) {
+            #auth-container.is-register-visible #form-panel,
+            #auth-container.is-completing-profile #form-panel {
+                width: 100% !important;
+            }
+            
+            #auth-container.is-register-visible #branding-panel,
+            #auth-container.is-completing-profile #branding-panel {
+                display: none !important;
+            }
+        }
+        
+        /* Estilos para botón volver responsive */
+        .volver-btn {
+            z-index: 30;
+        }
+        
+        @media (max-width: 640px) {
+            .volver-btn {
+                top: 0.75rem;
+                left: 0.75rem;
+                padding: 0.5rem 0.75rem;
+                font-size: 0.875rem;
+            }
+            
+            .volver-btn svg {
+                width: 1rem;
+                height: 1rem;
+            }
+        }
 
     </style>
     <!-- Firebase scripts -->
@@ -118,18 +195,137 @@
         a.volver-btn:hover svg {
             stroke: #3B82F6 !important;
         }
+        
+        /* Mejoras responsive adicionales */
+        @media (max-width: 768px) {
+            /* Títulos más pequeños en móviles */
+            .form-section h2 {
+                font-size: 1.875rem !important; /* text-3xl -> text-2xl */
+                line-height: 2.25rem !important;
+            }
+            
+            /* Logos más pequeños en móviles */
+            .form-section svg {
+                height: 2rem !important;
+                width: 2rem !important;
+            }
+            
+            /* Texto del logo más pequeño */
+            .form-section .text-xl {
+                font-size: 1.125rem !important;
+            }
+            
+            /* Botones más accesibles */
+            .login-gradient-btn, 
+            #google-login-btn,
+            #google-register-btn {
+                padding: 0.875rem 1rem !important;
+                font-size: 0.875rem !important;
+            }
+            
+            /* Inputs más cómodos */
+            .login-input {
+                padding: 0.875rem !important;
+                font-size: 0.875rem !important;
+            }
+            
+            /* Labels más pequeños */
+            .form-section label {
+                font-size: 0.875rem !important;
+            }
+            
+            /* Espaciado del formulario */
+            .form-section .space-y-4 > * + * {
+                margin-top: 0.75rem !important;
+            }
+            
+            .form-section .space-y-3 > * + * {
+                margin-top: 0.5rem !important;
+            }
+            
+            /* Grid responsive mejorado */
+            .form-section .grid-cols-1.md\\:grid-cols-2 {
+                grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            /* Títulos aún más pequeños en móviles pequeños */
+            .form-section h2 {
+                font-size: 1.5rem !important; /* text-2xl -> text-xl */
+                line-height: 2rem !important;
+            }
+            
+            /* Párrafos más pequeños */
+            .form-section p {
+                font-size: 0.875rem !important;
+            }
+            
+            /* Contenedor del formulario con más espacio */
+            .form-section {
+                padding-top: 2rem !important;
+                padding-bottom: 2rem !important;
+            }
+            
+            /* Altura fija para el contenedor principal */
+            #auth-container {
+                border-radius: 0.5rem !important;
+            }
+            
+            /* Scroll suave para formularios largos */
+            .form-section {
+                scroll-behavior: smooth;
+            }
+        }
+        
+        /* Mejoras para tablets */
+        @media (min-width: 641px) and (max-width: 768px) {
+            .form-section {
+                padding: 2rem !important;
+            }
+            
+            #auth-container {
+                margin: 1rem;
+                max-width: calc(100% - 2rem);
+            }
+        }
+        
+        /* Estilos para pantallas muy pequeñas */
+        @media (max-width: 480px) {
+            .form-section {
+                padding: 0.75rem !important;
+            }
+            
+            .form-section h2 {
+                font-size: 1.25rem !important;
+                line-height: 1.75rem !important;
+            }
+            
+            .login-gradient-btn, 
+            #google-login-btn,
+            #google-register-btn {
+                padding: 0.75rem !important;
+                font-size: 0.8125rem !important;
+            }
+            
+            .login-input {
+                padding: 0.75rem !important;
+                font-size: 0.8125rem !important;
+            }
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
-    <a href="home.html" class="absolute top-4 left-4 flex items-center gap-2 text-white bg-black bg-opacity-60 px-4 py-2 rounded-lg shadow transition z-20 volver-btn">
+  <body class="min-h-screen flex items-center justify-center p-2 sm:p-4">
+    <a href="index.html" class="absolute top-4 left-4 flex items-center gap-2 text-white bg-black bg-opacity-60 px-4 py-2 rounded-lg shadow transition z-20 volver-btn hover:bg-opacity-80">
         <svg class="w-5 h-5 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-        <span>Volver</span>
+        <span class="hidden sm:inline">Volver</span>
+        <span class="sm:hidden">←</span>
     </a>
     <div id="auth-container" class="w-full max-w-4xl mx-auto rounded-2xl shadow-2xl flex overflow-hidden">
         
         <!-- Panel de Formularios (Contiene Login, Registro y Completar Perfil) -->
         <div id="form-panel" class="w-full md:w-1/2 login-panel">
-            <div class="relative h-[680px]">
+            <div class="relative h-[680px] md:h-[680px] min-h-[600px]">
                 
                 <!-- Sección de Login -->
                 <div id="login-section" class="form-section">
@@ -317,7 +513,7 @@
         </div>
 
         <!-- Panel Derecho: Branding -->
-        <div id="branding-panel" class="w-1/2 p-10 md:flex flex-col items-center justify-center bg-black bg-opacity-90">
+        <div id="branding-panel" class="hidden md:flex md:w-1/2 p-6 lg:p-10 flex-col items-center justify-center bg-black bg-opacity-90">
             <svg class="h-16 w-16 mb-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="logo-gradient-branding" x1="0%" y1="0%" x2="100%" y2="100%">

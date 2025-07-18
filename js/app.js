@@ -122,8 +122,7 @@ function displaySavedStrategy() {
         // Recrear los botones y eventos
         setupStrategyModalButtons();
         
-        // Mostrar botón "Generar nuevo plan"
-        showNewPlanButton();
+
         
         return true;
     }
@@ -146,54 +145,62 @@ function setupStrategyModalButtons() {
     }
 }
 
-function showNewPlanButton() {
-    const strategyModalActions = document.getElementById('strategy-modal-actions');
-    if (strategyModalActions) {
-        // Eliminar botón existente si ya existe
-        const existingBtn = document.getElementById('new-plan-btn');
-        if (existingBtn) {
-            existingBtn.remove();
-        }
-        
-        const newPlanBtn = document.createElement('button');
-        newPlanBtn.id = 'new-plan-btn';
-        newPlanBtn.className = 'bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 w-48 rounded-full shadow-2xl transition-colors text-base flex items-center justify-center gap-2';
-        newPlanBtn.style.boxShadow = '0 8px 32px rgba(249,115,22,0.25)';
-        newPlanBtn.innerHTML = '<span>Generar nuevo plan</span>';
-        
-        newPlanBtn.addEventListener('click', () => {
-            if (confirm('¿Estás seguro de que quieres generar un nuevo plan? Se perderá el plan actual.')) {
-                clearSavedStrategy();
-                hideNewPlanButton();
-                updateGenerateStrategyButton();
-                // Limpiar el modal
-                if (strategyModalContent) {
-                    strategyModalContent.innerHTML = '';
-                }
-                if (strategyModal) {
-                    strategyModal.classList.add('hidden');
-                }
-            }
-        });
-        
-        // Insertar el botón al final del div de acciones
-        strategyModalActions.appendChild(newPlanBtn);
-    }
-}
 
-function hideNewPlanButton() {
-    const newPlanBtn = document.getElementById('new-plan-btn');
-    if (newPlanBtn) {
-        newPlanBtn.remove();
+
+
+
+function showTemporaryMessage(message) {
+    // Crear o actualizar el mensaje temporal
+    let messageDiv = document.getElementById('temp-message');
+    if (!messageDiv) {
+        messageDiv = document.createElement('div');
+        messageDiv.id = 'temp-message';
+        messageDiv.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-opacity duration-300';
+        document.body.appendChild(messageDiv);
     }
+    
+    messageDiv.textContent = message;
+    messageDiv.style.opacity = '1';
+    
+    // Ocultar después de 4 segundos
+    setTimeout(() => {
+        messageDiv.style.opacity = '0';
+        setTimeout(() => {
+            if (messageDiv && messageDiv.parentNode) {
+                messageDiv.parentNode.removeChild(messageDiv);
+            }
+        }, 300);
+    }, 4000);
 }
 
 function updateGenerateStrategyButton() {
-    const generateStrategyBtn = document.getElementById('generate-strategy-btn');
-    if (generateStrategyBtn) {
+    const viewSavedStrategyBtn = document.getElementById('view-saved-strategy-btn');
+    const statusMessage = document.querySelector('.mt-6 .text-sm');
+    
+    if (viewSavedStrategyBtn) {
         const saved = loadStrategyFromStorage();
-        const buttonText = saved ? "📋 Ver Estrategia Guardada" : "⚙️ Generar Estrategia de Implementación";
-        generateStrategyBtn.innerHTML = buttonText;
+        
+        if (saved) {
+            viewSavedStrategyBtn.disabled = false;
+            viewSavedStrategyBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            viewSavedStrategyBtn.classList.add('hover:bg-gray-700');
+            
+            if (statusMessage) {
+                statusMessage.textContent = 'Tienes una estrategia guardada disponible';
+                statusMessage.classList.remove('text-red-500');
+                statusMessage.classList.add('text-gray-500', 'dark:text-gray-400');
+            }
+        } else {
+            viewSavedStrategyBtn.disabled = true;
+            viewSavedStrategyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            viewSavedStrategyBtn.classList.remove('hover:bg-gray-700');
+            
+            if (statusMessage) {
+                statusMessage.textContent = 'No hay estrategia guardada';
+                statusMessage.classList.remove('text-gray-500', 'dark:text-gray-400');
+                statusMessage.classList.add('text-red-500');
+            }
+        }
     }
 }
 
@@ -230,7 +237,7 @@ async function handleFirstSteps() {
         }
         
         // Prompt dinámico para primeros pasos
-        const firstStepsPrompt = `Actúa como un experto en ${businessData.toolNames} para PYMES colombianas. Basado en este perfil de empresa: Tipo de Empresa: ${businessData.companyType}, Sector: ${businessData.sector}, Actividad: ${businessData.businessActivity}, Descripción: ${businessData.businessDescription}, Objetivo: ${businessData.improvementGoal}, Desafío: ${businessData.currentProblem}. Genera 3 ejemplos prácticos y listos para usar que ayuden a la empresa a dar sus primeros pasos con la herramienta recomendada. Si es de marketing, crea borradores de publicaciones; si es de productividad, redacta un email de presentación; si es de ventas, crea una plantilla de WhatsApp Business. Responde en HTML simple (<ul>, <li>, <strong>, <p>).`;
+        const firstStepsPrompt = `Actúa como un experto en ${businessData.toolNames} para PYMES colombianas. Basado en este perfil de empresa: Tipo de Empresa: ${businessData.companyType}, Sector: ${businessData.sector}, Actividad: ${businessData.businessActivity}, Descripción: ${businessData.businessDescription}, Objetivo: ${businessData.improvementGoal}, Desafío: ${businessData.currentProblem}. Genera 3 ejemplos prácticos y listos para usar que ayuden a la empresa a dar sus primeros pasos con la herramienta recomendada. Si es de marketing, crea borradores de publicaciones; si es de productividad, redacta un email de presentación; si es de ventas, crea una plantilla de WhatsApp Business. Responde en HTML simple sin clases CSS, solo usando etiquetas básicas (<ul>, <li>, <strong>, <p>, <h4>). Mantén el texto corto y conciso para que sea fácil de leer en móvil.`;
         
         const apiUrl = `${GEMINI_CONFIG.baseUrl}?key=${GEMINI_CONFIG.apiKey}`;
         const payload = { contents: [{ parts: [{ text: firstStepsPrompt }] }] };
@@ -240,10 +247,73 @@ async function handleFirstSteps() {
             if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
             const result = await response.json();
             let stepsText = result.candidates && result.candidates[0]?.content.parts[0].text ? result.candidates[0].content.parts[0].text : '';
+            // Limpiar backticks del inicio y del final
             stepsText = stepsText.replace(/^```html\s*|^```\s*/i, '');
-            firstStepsResult.innerHTML = `<h3 style='font-size:1.3rem;font-weight:700;margin-bottom:1rem;color:#059669;'>Primeros pasos prácticos</h3>` + stepsText;
+            stepsText = stepsText.replace(/\s*```\s*$/i, '');
+            stepsText = stepsText.trim();
+            
+            // Crear el contenido con clases CSS responsivas
+            const responsiveContent = `
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 sm:p-6 rounded-lg border border-green-200 dark:border-green-700 mt-6">
+                    <h3 class="text-lg sm:text-xl font-bold mb-4 text-green-700 dark:text-green-300 flex items-center gap-2">
+                        <span class="text-xl sm:text-2xl">🚀</span>
+                        <span>Primeros pasos prácticos</span>
+                    </h3>
+                    <div class="responsive-content text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+                        ${stepsText}
+                    </div>
+                </div>
+            `;
+            
+            firstStepsResult.innerHTML = responsiveContent;
+            
+            // Aplicar estilos responsivos a los elementos generados
+            const generatedContent = firstStepsResult.querySelector('.responsive-content');
+            if (generatedContent) {
+                // Aplicar clases a los elementos generados
+                const paragraphs = generatedContent.querySelectorAll('p');
+                paragraphs.forEach(p => {
+                    p.classList.add('mb-3', 'text-gray-700', 'dark:text-gray-300', 'leading-relaxed');
+                });
+                
+                const lists = generatedContent.querySelectorAll('ul');
+                lists.forEach(ul => {
+                    ul.classList.add('space-y-2', 'pl-4', 'sm:pl-6');
+                });
+                
+                const listItems = generatedContent.querySelectorAll('li');
+                listItems.forEach(li => {
+                    li.classList.add('text-gray-700', 'dark:text-gray-300', 'leading-relaxed');
+                });
+                
+                const headings = generatedContent.querySelectorAll('h4');
+                headings.forEach(h => {
+                    h.classList.add('font-semibold', 'text-base', 'sm:text-lg', 'mb-2', 'text-green-700', 'dark:text-green-300');
+                });
+                
+                const strongElements = generatedContent.querySelectorAll('strong');
+                strongElements.forEach(strong => {
+                    strong.classList.add('font-semibold', 'text-green-700', 'dark:text-green-300');
+                });
+                
+                // Scroll suave hacia el contenido de primeros pasos en móvil
+                if (window.innerWidth <= 640) {
+                    setTimeout(() => {
+                        firstStepsResult.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                    }, 100);
+                }
+            }
         } catch (error) {
-            firstStepsResult.innerHTML = `<p class='text-red-500'>No se pudieron generar los primeros pasos. Intenta de nuevo.</p>`;
+            firstStepsResult.innerHTML = `
+                <div class="bg-red-50 dark:bg-red-900/20 p-4 sm:p-6 rounded-lg border border-red-200 dark:border-red-700 mt-6">
+                    <p class="text-red-600 dark:text-red-400 text-sm sm:text-base">
+                        ❌ No se pudieron generar los primeros pasos. Intenta de nuevo.
+                    </p>
+                </div>
+            `;
         }
     }
 }
@@ -694,6 +764,14 @@ function setupEventListeners() {
     if (businessActivitySelector) {
         businessActivitySelector.addEventListener('change', toggleOtherActivityField);
     }
+
+    // Agregar event listeners para actualizar el botón cuando cambian los datos del formulario
+    [companyTypeSelector, sectorSelector, businessDescriptionInput, improvementGoalInput, currentProblemInput, otherActivityInput].forEach(element => {
+        if (element) {
+            element.addEventListener('change', updateGenerateStrategyButton);
+            element.addEventListener('input', updateGenerateStrategyButton);
+        }
+    });
     
     // Modal close buttons
     if (closeInfoModalBtn) {
@@ -846,6 +924,9 @@ function toggleOtherActivityField() {
         otherActivityContainer.classList.add('hidden');
         if (otherActivityInput) otherActivityInput.value = '';
     }
+    
+    // Actualizar el botón cuando cambian los datos
+    updateGenerateStrategyButton();
 }
 
 function handleScrollSpy() {
@@ -938,23 +1019,54 @@ function updateRecommendation() {
     // Área para volver a agregar IAs eliminadas
     toolsHTML += '<div id="restore-removed-tools" class="flex flex-wrap justify-center gap-2 mt-4"></div>';
 
-    // Verificar si hay una estrategia guardada para cambiar el texto del botón
+    // Verificar si hay una estrategia guardada
     const saved = loadStrategyFromStorage();
-    const buttonText = saved ? "📋 Ver Estrategia Guardada" : "⚙️ Generar Estrategia de Implementación";
     
-    const strategyButtonHTML = `<div class="mt-6 text-center"><button id="generate-strategy-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-300">${buttonText}</button></div>`;
+    // Crear HTML para ambos botones
+    const strategyButtonHTML = `<div class="mt-6 text-center space-y-3">
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <button id="generate-new-strategy-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-300 flex items-center justify-center gap-2">
+                <span>⚙️ Generar Nueva Estrategia</span>
+            </button>
+            <button id="view-saved-strategy-btn" class="bg-gray-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-700 transition-colors duration-300 flex items-center justify-center gap-2 ${saved ? '' : 'opacity-50 cursor-not-allowed'}" ${saved ? '' : 'disabled'}>
+                <span>📋 Ver Estrategia Guardada</span>
+            </button>
+        </div>
+        ${saved ? '<p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Tienes una estrategia guardada disponible</p>' : '<p class="text-sm text-gray-500 dark:text-gray-400 mt-2">No hay estrategia guardada</p>'}
+    </div>`;
 
     recommendationResultContainer.innerHTML = `<p class="text-center text-gray-600 dark:text-gray-400">${justification}</p>${toolsHTML}${strategyButtonHTML}`;
 
-    // Agregar evento al botón de generar estrategia
-    const generateStrategyBtn = document.getElementById('generate-strategy-btn');
-    if (generateStrategyBtn) {
-        generateStrategyBtn.addEventListener('click', () => {
+    // Agregar eventos a los botones de estrategia
+    const generateNewStrategyBtn = document.getElementById('generate-new-strategy-btn');
+    const viewSavedStrategyBtn = document.getElementById('view-saved-strategy-btn');
+    
+    if (generateNewStrategyBtn) {
+        generateNewStrategyBtn.addEventListener('click', () => {
             const currentTools = Array.from(document.querySelectorAll('.recommended-tool-card')).map(card => card.getAttribute('data-tool-key'));
+            
+            // Siempre limpiar la estrategia anterior y generar una nueva
+            clearSavedStrategy();
             generateStrategy(currentTools, improvementGoal, currentProblem);
+            
+            // Actualizar el estado de los botones después de generar
+            setTimeout(() => {
+                updateGenerateStrategyButton();
+            }, 100);
         });
     }
-
+    
+    if (viewSavedStrategyBtn) {
+        viewSavedStrategyBtn.addEventListener('click', () => {
+            if (displaySavedStrategy()) {
+                strategyModal.classList.remove('hidden');
+            }
+                });
+    }
+    
+    // Actualizar el estado de los botones después de crear la recomendación
+    updateGenerateStrategyButton();
+    
     // Lógica para eliminar y restaurar recomendaciones
     function updateCloseButtons() {
         const cards = document.querySelectorAll('.recommended-tool-card');
@@ -1095,15 +1207,17 @@ Genera un plan de implementación detallado. La respuesta DEBE ser en formato HT
         
         if (result.candidates && result.candidates[0]?.content.parts[0].text) {
             let strategyText = result.candidates[0].content.parts[0].text;
-            // Limpiar markdown
+            // Limpiar markdown y backticks del inicio y final
             strategyText = strategyText.replace(/^```html\s*|^```\s*/i, '');
+            strategyText = strategyText.replace(/\s*```\s*$/i, '');
             strategyText = strategyText.replace(/<div class="flex justify-center mt-8">[\s\S]*?<\/div>/gi, '');
+            strategyText = strategyText.trim();
             // Agregar título principal si no existe
             if (!/^<h1/i.test(strategyText.trim())) {
                 strategyText = `<h1 style="font-size:2.2rem;font-weight:800;margin-bottom:1.5rem;text-align:center;" class="text-gray-900 dark:text-white">Estrategia de implementación</h1>` + strategyText;
             }
             // Agregar div para resultados de primeros pasos
-            strategyText += `<div id="first-steps-result" class="mt-8"></div>`;
+            strategyText += `<div id="first-steps-result" class="mt-8 w-full max-w-none overflow-x-auto"></div>`;
             strategyModalContent.innerHTML = strategyText;
             
             // Guardar estrategia en localStorage
@@ -1122,7 +1236,7 @@ Genera un plan de implementación detallado. La respuesta DEBE ser en formato HT
                 businessData: businessData
             });
             
-            // Actualizar el texto del botón
+            // Actualizar el estado de los botones
             updateGenerateStrategyButton();
             
             // Agregar botón de primeros pasos al div de acciones
@@ -1136,9 +1250,9 @@ Genera un plan de implementación detallado. La respuesta DEBE ser en formato HT
                 
                 const firstStepsBtn = document.createElement('button');
                 firstStepsBtn.id = 'first-steps-btn';
-                firstStepsBtn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 w-48 rounded-full shadow-2xl transition-colors text-base flex items-center justify-center gap-2';
+                firstStepsBtn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 sm:px-4 w-36 sm:w-44 lg:w-48 rounded-full shadow-2xl transition-colors text-sm sm:text-base flex items-center justify-center gap-1 sm:gap-2';
                 firstStepsBtn.style.boxShadow = '0 8px 32px rgba(16,185,129,0.25)';
-                firstStepsBtn.innerHTML = '<span>Ayúdame a empezar</span>';
+                firstStepsBtn.innerHTML = '<span class="hidden sm:inline">Ayúdame a empezar</span><span class="sm:hidden">Empezar</span>';
                 
                 // Insertar el botón al principio del div de acciones
                 strategyModalActions.insertBefore(firstStepsBtn, strategyModalActions.firstChild);
@@ -1154,8 +1268,7 @@ Genera un plan de implementación detallado. La respuesta DEBE ser en formato HT
                 firstStepsBtn.addEventListener('click', handleFirstSteps);
             }
             
-            // Mostrar botón "Generar nuevo plan"
-            showNewPlanButton();
+
         } else {
             strategyModalContent.innerHTML = `<p class="text-red-500">No se pudo generar una estrategia. La respuesta de la IA no fue válida.</p>`;
         }
